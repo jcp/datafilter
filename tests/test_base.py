@@ -4,6 +4,7 @@ import string
 
 import pytest
 
+from datafilter import Text
 from datafilter.base import Base
 
 
@@ -38,74 +39,113 @@ def test_instantiation_with_invalid_base():
     with pytest.raises(TypeError) as exc_info:
         InvalidBase()
 
-    expected = (
+    assert exc_info.match(
         "Can't instantiate abstract class InvalidBase with abstract methods results"
     )
-    assert exc_info.match(expected)
 
 
 def test_instantiation_with_invalid_base_no_property_decorator():
     with pytest.raises(TypeError) as exc_info:
-        InvalidBaseNoPropertyDecorator()
+        InvalidBaseNoPropertyDecorator(tokens=["Lorem"])
 
-    expected = '"results" must be a property.'
-    assert exc_info.match(expected)
-
-
-def test_translations():
-    expected = [string.punctuation, string.whitespace, string.digits]
-    assert Base.TRANSLATIONS == expected
+    assert exc_info.match('"results" must be a property.')
 
 
-def test_translations_type():
+def test_tokens_type_error():
+    with pytest.raises(TypeError) as exc_info:
+        ValidBase(tokens="")
+
+    exc_info.match('"tokens" must be a list.')
+
+
+def test_tokens_value_error():
     with pytest.raises(ValueError) as exc_info:
-        ValidBase(translations="")
+        ValidBase(tokens=[1])
 
-    expected = '"translations must be a list.'
-    exc_info.match(expected)
+    exc_info.match('"tokens" must be a list of strings.')
 
 
-def test_translations_values():
+def test_translations_default():
+    assert Base.TRANSLATIONS == [string.punctuation, string.whitespace, string.digits]
+
+
+def test_translations_type_error():
+    with pytest.raises(TypeError) as exc_info:
+        ValidBase(tokens=["Lorem"], translations="")
+
+    exc_info.match('"translations" must be a list.')
+
+
+def test_translations_value_error():
     with pytest.raises(ValueError) as exc_info:
-        ValidBase(translations=[1])
+        ValidBase(tokens=["Lorem"], translations=[1])
 
-    expected = '"translations" must be a list of strings.'
-    exc_info.match(expected)
-
-
-def test_normalize():
-    data = ["Lorem", "Ipsum"]
-    obj = ValidBase()
-    results = obj.normalize(data)
-    expected = {"original": "Lorem", "normalized": "lorem"}
-    assert next(results) == expected
-    expected = {"original": "Ipsum", "normalized": "ipsum"}
-    assert next(results) == expected
+    exc_info.match('"translations" must be a list of strings.')
 
 
 def test_makelower():
     data = "Lorem ipsum"
-    obj = ValidBase()
-    expected = "lorem ipsum"
-    assert obj.makelower(data) == expected
+    obj = ValidBase(tokens=["Lorem"])
+    assert obj.makelower(data) == "lorem ipsum"
 
 
-def test_casesensitive_false():
+def test_makelower_caseinsensitive_true():
     data = "Lorem ipsum"
-    obj = ValidBase(casesensitive=False)
-    expected = "lorem ipsum"
-    assert obj.makelower(data) == expected
+    obj = ValidBase(tokens=["Lorem"], caseinsensitive=True)
+    assert obj.makelower(data) == "lorem ipsum"
 
 
-def test_casesensitive_true():
+def test_makelower_caseinsensitive_false():
     data = "Lorem ipsum"
-    obj = ValidBase(casesensitive=True)
-    expected = "Lorem ipsum"
-    assert obj.makelower(data) == expected
+    obj = ValidBase(tokens=["Lorem"], caseinsensitive=False)
+    assert obj.makelower(data) == "Lorem ipsum"
 
 
 def test_maketrans():
-    obj = ValidBase(translations=["test"])
+    obj = ValidBase(tokens=["Lorem"], translations=["test"])
     z = "".join(obj.translations)
-    expected = str.maketrans("", "", z)
-    assert obj.maketrans() == expected
+    assert obj.maketrans() == str.maketrans("", "", z)
+
+
+def test_normalize():
+    data = ["Lorem", "Ipsum"]
+    obj = ValidBase(tokens=["Lorem"])
+    results = obj.normalize(data)
+    assert next(results) == {"original": "Lorem", "normalized": "lorem"}
+    assert next(results) == {"original": "Ipsum", "normalized": "ipsum"}
+
+
+def test_normalize_bidirectional_true():
+    text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit"
+    obj = Text(text, tokens=["tile"], bidirectional=True)
+    assert next(obj.results)["describe"]["tokens"]["count"] == 1
+
+
+def test_normalize_bidirectional_false():
+    text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit"
+    data = Text(text, tokens=["tile"], bidirectional=False)
+    assert next(data.results)["describe"]["tokens"]["count"] == 0
+
+
+def test_parse_flagged_false():
+    obj = ValidBase(tokens=["Dolor"])
+    data = obj.normalize(["Lorem ipsum"])
+    assert obj.parse(next(data))["flagged"] is False
+
+
+def test_parse_flagged_true():
+    obj = ValidBase(tokens=["Lorem"])
+    data = obj.normalize(["Lorem ipsum"])
+    assert obj.parse(next(data))["flagged"] is True
+
+
+def test_parse_return():
+    obj = ValidBase(tokens=["Lorem"])
+    data = obj.normalize(["Lorem ipsum"])
+    assert obj.parse(next(data)) == {
+        "data": "Lorem ipsum",
+        "flagged": True,
+        "describe": {
+            "tokens": {"detected": ["Lorem"], "count": 1, "frequency": {"Lorem": 1}}
+        },
+    }

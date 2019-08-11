@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from datafilter.filters import CSV, Text, TextFile
+
 """
 Data Filter
 ~~~~~~~~~~~
@@ -10,13 +12,16 @@ different data structures or processing requirements.
 """
 
 __title__ = "Data Filter"
-__description__ = "Quickly find flags (words, phrases, etc) within your data."
+__description__ = "Quickly find tokens (words, phrases, etc) within your data."
 __url__ = "https://github.com/jcp/datafilter"
 __package_name__ = "datafilter"
-__version__ = "0.1.2"
+__version__ = "0.2.0"
 __author__ = "James C. Palmer"
 __author_email__ = "me@jcp.io"
 __license__ = "BSD 3-Clause"
 __copyright__ = "Copyright (c) 2019 James C. Palmer"
 
 VERSION = __version__
+
+
+__all__ = ["CSV", "Text", "TextFile"]

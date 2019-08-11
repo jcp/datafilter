@@ -2,27 +2,39 @@
 
 import string
 from abc import ABC, abstractmethod
-from typing import Dict, Iterator, List, Optional, Union
+from typing import Any, Dict, Iterator, List, Optional, Union
 
 
 class Base(ABC):
     """
-    Abstract base class for the `filters.Filter` and `flags.Flag` classes.
+    Abstract base class.
     """
 
     TRANSLATIONS: List[str] = [string.punctuation, string.whitespace, string.digits]
 
     def __init__(
-        self, translations: Optional[List[str]] = None, casesensitive: bool = False
+        self,
+        tokens: List[str],
+        translations: Optional[List[str]] = None,
+        bidirectional: bool = True,
+        caseinsensitive: bool = True,
     ) -> None:
+        self.tokens = tokens
         self.translations = self.TRANSLATIONS if translations is None else translations
-        self.casesensitive = casesensitive
+        self.bidirectional = bidirectional
+        self.caseinsensitive = caseinsensitive
 
         if not isinstance(type(self).results, property):
             raise TypeError('"results" must be a property.')
 
+        if not isinstance(self.tokens, list):
+            raise TypeError('"tokens" must be a list.')
+
+        if not all(isinstance(x, str) for x in self.tokens):
+            raise ValueError('"tokens" must be a list of strings.')
+
         if not isinstance(self.translations, list):
-            raise ValueError('"translations must be a list.')
+            raise TypeError('"translations" must be a list.')
 
         if not all(isinstance(x, str) for x in self.translations):
             raise ValueError('"translations" must be a list of strings.')
@@ -34,6 +46,23 @@ class Base(ABC):
         Abstract method that is used to return processed results.
         """
         pass  # pragma: no cover
+
+    def makelower(self, data: str) -> str:
+        """
+        Return lowercase data.
+        """
+        if self.caseinsensitive:
+            data = data.lower()
+
+        return data
+
+    def maketrans(self) -> Dict[int, Optional[int]]:
+        """
+        Return translation table.
+        """
+        z = "".join(self.translations)
+        trans = str.maketrans("", "", z)
+        return trans
 
     def normalize(
         self, data: Union[List[str], Iterator[List[str]]]
@@ -47,19 +76,30 @@ class Base(ABC):
             val = self.makelower(val)
             yield {"original": i, "normalized": val}
 
-    def makelower(self, data: str) -> str:
+    def parse(self, data: Dict[str, Union[List[str], str]]) -> Dict[str, Any]:
         """
-        Return lowercase data.
+        Return parsed data.
         """
-        if not self.casesensitive:
-            data = data.lower()
+        detected = []
+        frequency = {}
+        do, dn = data.values()
 
-        return data
+        for token in self.normalize(self.tokens):
+            to, tn = token.values()
+            frequency.update({to: 0})
 
-    def maketrans(self) -> Dict[int, Optional[int]]:
-        """
-        Return translation table.
-        """
-        z = "".join(self.translations)
-        trans = str.maketrans("", "", z)
-        return trans
+            if tn in dn or self.bidirectional and tn in dn[::-1]:
+                detected.append(to)
+                frequency[to] = dn.count(tn) + dn[::-1].count(tn)
+
+        return {
+            "data": do,
+            "flagged": True if detected else False,
+            "describe": {
+                "tokens": {
+                    "detected": detected,
+                    "count": len(detected),
+                    "frequency": frequency,
+                }
+            },
+        }
