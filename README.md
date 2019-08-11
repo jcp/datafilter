@@ -247,8 +247,8 @@ Returns parsed and property formatted data.
 >
 > ```python
 > words = Flag(tokens=["Lorem"])
-> f = Text("Lorem ipsum dolor sit amet", flags=[words])
-> print(next(f.results))
+> data = Text("Lorem ipsum dolor sit amet", flags=[words])
+> print(next(data.results))
 > ```
 >
 > The returned result would be formatted as:

@@ -89,17 +89,17 @@ def test_parse_return_structure():
 def test_process_and_bidirectional_true():
     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit"
     words = Flag(tokens=["tile"])
-    f = Text(text, flags=[words], bidirectional=True)
+    data = Text(text, flags=[words], bidirectional=True)
     expected = 1
-    assert next(f.results)["describe"]["flags"]["count"] == expected
+    assert next(data.results)["describe"]["flags"]["count"] == expected
 
 
 def test_process_and_bidirectional_false():
     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit"
     words = Flag(tokens=["tile"])
-    f = Text(text, flags=[words], bidirectional=False)
+    data = Text(text, flags=[words], bidirectional=False)
     expected = 0
-    assert next(f.results)["describe"]["flags"]["count"] == expected
+    assert next(data.results)["describe"]["flags"]["count"] == expected
 
 
 def test_csv_path_does_not_exist():
@@ -117,8 +117,8 @@ def test_csv_read_csv():
     words = Flag(tokens=["lorem"])
 
     with open(filepath, newline="") as stream:
-        f = CSV(path=filepath, flags=[words])
-        reader = f.read_csv(stream=stream)
+        data = CSV(path=filepath, flags=[words])
+        reader = data.read_csv(stream=stream)
         expected = "Lorem ipsum dolor sit amet"
         assert next(reader)[0].startswith(expected)
 
@@ -128,11 +128,11 @@ def test_csv_results():
     filepath = os.path.join(path, "assets/example.csv")
     words = Flag(tokens=["lorem"])
     phrases = Flag(tokens=["sit amet"])
-    f = CSV(filepath, flags=[words, phrases])
+    data = CSV(filepath, flags=[words, phrases])
     flagged = []
     counts = []
 
-    for i in f.results:
+    for i in data.results:
         flagged.append(i["flagged"])
         counts.append(i["describe"]["flags"]["count"])
 
@@ -154,17 +154,17 @@ def test_text_text_type():
 def test_text_results():
     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit"
     words = Flag(tokens=["Lorem"])
-    f = Text(text=text, flags=[words])
+    data = Text(text=text, flags=[words])
     expected = 1
-    assert next(f.results)["describe"]["flags"]["count"] == expected
+    assert next(data.results)["describe"]["flags"]["count"] == expected
 
 
 def test_text_results_re_split():
     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit"
     words = Flag(tokens=["Lorem"])
-    f = Text(text=text, flags=[words], re_split=r"\s+")
+    data = Text(text=text, flags=[words], re_split=r"\s+")
     expected = len(text.split(" "))
-    assert sum(1 for _ in f.results) == expected
+    assert sum(1 for _ in data.results) == expected
 
 
 def test_textfile_path_does_not_exist():
@@ -181,15 +181,15 @@ def test_textfile_results():
     filepath = os.path.join(path, "assets/example.txt")
     words = Flag(tokens=["lorem"])
     phrases = Flag(tokens=["sit amet"])
-    f = TextFile(filepath, flags=[words, phrases])
+    data = TextFile(filepath, flags=[words, phrases])
     expected = 2
-    assert next(f.results)["describe"]["flags"]["count"] == expected
+    assert next(data.results)["describe"]["flags"]["count"] == expected
 
 
 def test_textfile_results_re_split():
     path = os.path.dirname(os.path.abspath(__file__))
     filepath = os.path.join(path, "assets/example.txt")
     words = Flag(tokens=["nation"])
-    f = TextFile(filepath, flags=[words], re_split=r"(?<!^)\s*[.\n]+\s*(?!$)")
+    data = TextFile(filepath, flags=[words], re_split=r"(?<!^)\s*[.\n]+\s*(?!$)")
     expected = 5
-    assert sum(1 for _ in f.results) == expected
+    assert sum(1 for _ in data.results) == expected
