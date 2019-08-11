@@ -1,0 +1,14 @@
+*.db
+*.egg-info
+*.ipynb
+*.pyc
+*.sqlite3
+
+.DS_Store
+.coverage
+.mypy_cache
+.pytest_cache
+.tox
+
+build
+dist
