@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
 
-import string
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Iterator, List, Optional, Union
+
+from .config import TRANSLATIONS
 
 
 class Base(ABC):
     """
     Abstract base class.
     """
-
-    TRANSLATIONS: List[str] = [string.punctuation, string.whitespace, string.digits]
 
     def __init__(
         self,
@@ -20,7 +19,7 @@ class Base(ABC):
         caseinsensitive: bool = True,
     ) -> None:
         self.tokens = tokens
-        self.translations = self.TRANSLATIONS if translations is None else translations
+        self.translations = TRANSLATIONS if translations is None else translations
         self.bidirectional = bidirectional
         self.caseinsensitive = caseinsensitive
 
@@ -62,6 +61,7 @@ class Base(ABC):
             val = "".join(i)
             val = val.translate(self.maketrans())
             val = self.makelower(val)
+            print(val)
             yield {"original": i, "normalized": val}
 
     def parse(self, data: Dict[str, Union[List[str], str]]) -> Dict[str, Any]:

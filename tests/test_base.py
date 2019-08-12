@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import string
-
 import pytest
 
 from datafilter import Text
@@ -49,10 +47,6 @@ def test_instantiation_with_invalid_base_no_property_decorator():
         InvalidBaseNoPropertyDecorator(tokens=["Lorem"])
 
     assert exc_info.match('"results" must be a property.')
-
-
-def test_translations_default():
-    assert Base.TRANSLATIONS == [string.punctuation, string.whitespace, string.digits]
 
 
 def test_makelower():
