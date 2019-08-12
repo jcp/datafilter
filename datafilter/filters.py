@@ -3,69 +3,12 @@
 import csv
 import os
 import re
-from itertools import chain
-from typing import Any, Dict, Iterator, List, Optional, TextIO, Union
+from typing import Dict, Iterator, List, Optional, TextIO, Union
 
 from .base import Base
-from .flags import Flag
 
 
-class Filter(Base):
-    """
-    Abstract filter class.
-    """
-
-    def __init__(
-        self,
-        flags: List[Flag],
-        translations: Optional[List[str]] = None,
-        casesensitive: bool = False,
-        bidirectional: bool = True,
-    ) -> None:
-        super().__init__(translations, casesensitive)
-        self.flags = flags
-        self.bidirectional = bidirectional
-
-        for obj in flags:
-            if not isinstance(obj, Flag):
-                raise ValueError('"flags" must be a list of Flag objects.')
-
-    def get_flags(self) -> chain:
-        """
-        Return a generator that contains all normalized flags.
-        """
-        return chain(*[x.results for x in self.flags])
-
-    def parse(self, data: Dict[str, Union[List[str], str]]) -> Dict[str, Any]:
-        """
-        Return parsed data.
-        """
-        detected = []
-        frequency = {}
-        do, dn = data.values()
-
-        for flag in self.get_flags():
-            fo, fn = flag.values()
-            frequency.update({fo: 0})
-
-            if fn in dn or self.bidirectional and fn in dn[::-1]:
-                detected.append(fo)
-                frequency[fo] = dn.count(fn)
-
-        return {
-            "data": do,
-            "flagged": True if detected else False,
-            "describe": {
-                "flags": {
-                    "detected": detected,
-                    "count": len(detected),
-                    "frequency": frequency,
-                }
-            },
-        }
-
-
-class CSV(Filter):
+class CSV(Base):
     """
     A CSV filter.
     """
@@ -73,12 +16,12 @@ class CSV(Filter):
     def __init__(
         self,
         path: str,
-        flags: List[Flag],
+        tokens: List[str],
         translations: Optional[List[str]] = None,
-        casesensitive: bool = False,
         bidirectional: bool = True,
+        caseinsensitive: bool = True,
     ) -> None:
-        super().__init__(flags, translations, casesensitive, bidirectional)
+        super().__init__(tokens, translations, bidirectional, caseinsensitive)
         self.path = path
 
         if not os.path.exists(self.path):
@@ -103,7 +46,7 @@ class CSV(Filter):
                 yield self.parse(data)
 
 
-class Text(Filter):
+class Text(Base):
     """
     A text filter.
     """
@@ -111,13 +54,13 @@ class Text(Filter):
     def __init__(
         self,
         text: str,
-        flags: List[Flag],
+        tokens: List[str],
         re_split: Optional[str] = None,
         translations: Optional[List[str]] = None,
-        casesensitive: bool = False,
         bidirectional: bool = True,
+        caseinsensitive: bool = True,
     ) -> None:
-        super().__init__(flags, translations, casesensitive, bidirectional)
+        super().__init__(tokens, translations, bidirectional, caseinsensitive)
         self.text = text
         self.re_split = re_split
 
@@ -137,7 +80,7 @@ class Text(Filter):
             yield self.parse(data)
 
 
-class TextFile(Filter):
+class TextFile(Base):
     """
     A text file filter.
     """
@@ -145,13 +88,13 @@ class TextFile(Filter):
     def __init__(
         self,
         path: str,
-        flags: List[Flag],
+        tokens: List[str],
         re_split: Optional[str] = None,
         translations: Optional[List[str]] = None,
-        casesensitive: bool = False,
         bidirectional: bool = True,
+        caseinsensitive: bool = True,
     ) -> None:
-        super().__init__(flags, translations, casesensitive, bidirectional)
+        super().__init__(tokens, translations, bidirectional, caseinsensitive)
         self.path = path
         self.re_split = re_split
 
