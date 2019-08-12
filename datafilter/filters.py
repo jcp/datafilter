@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import csv
-import os
 import re
 from typing import Dict, Iterator, List, Optional, TextIO, Union
 
@@ -23,9 +22,6 @@ class CSV(Base):
     ) -> None:
         super().__init__(tokens, translations, bidirectional, caseinsensitive)
         self.path = path
-
-        if not os.path.exists(self.path):
-            raise ValueError(f"File does not exist: {self.path}.")
 
     @staticmethod
     def read_csv(stream: TextIO) -> Iterator[List[str]]:
@@ -97,9 +93,6 @@ class TextFile(Base):
         super().__init__(tokens, translations, bidirectional, caseinsensitive)
         self.path = path
         self.re_split = re_split
-
-        if not os.path.exists(self.path):
-            raise ValueError(f"File does not exist: {self.path}.")
 
     @property
     def results(self) -> Iterator[Dict[int, Dict[str, Union[List[str], str, bool]]]]:

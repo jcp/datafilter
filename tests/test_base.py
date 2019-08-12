@@ -51,36 +51,8 @@ def test_instantiation_with_invalid_base_no_property_decorator():
     assert exc_info.match('"results" must be a property.')
 
 
-def test_tokens_type_error():
-    with pytest.raises(TypeError) as exc_info:
-        ValidBase(tokens="")
-
-    exc_info.match('"tokens" must be a list.')
-
-
-def test_tokens_value_error():
-    with pytest.raises(ValueError) as exc_info:
-        ValidBase(tokens=[1])
-
-    exc_info.match('"tokens" must be a list of strings.')
-
-
 def test_translations_default():
     assert Base.TRANSLATIONS == [string.punctuation, string.whitespace, string.digits]
-
-
-def test_translations_type_error():
-    with pytest.raises(TypeError) as exc_info:
-        ValidBase(tokens=["Lorem"], translations="")
-
-    exc_info.match('"translations" must be a list.')
-
-
-def test_translations_value_error():
-    with pytest.raises(ValueError) as exc_info:
-        ValidBase(tokens=["Lorem"], translations=[1])
-
-    exc_info.match('"translations" must be a list of strings.')
 
 
 def test_makelower():

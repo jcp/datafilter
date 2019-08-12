@@ -7,13 +7,6 @@ import pytest
 from datafilter import CSV, Text, TextFile
 
 
-def test_csv_path_value_error():
-    with pytest.raises(ValueError) as exc_info:
-        CSV("invalid.csv", tokens=["Lorem"])
-
-    exc_info.match("File does not exist: invalid.csv.")
-
-
 def test_csv_read_csv():
     path = os.path.dirname(os.path.abspath(__file__))
     filepath = os.path.join(path, "assets/example.csv")
@@ -56,13 +49,6 @@ def test_text_results_re_split():
     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit"
     data = Text(text=text, tokens=["Lorem"], re_split=r"\s+")
     assert sum(1 for _ in data.results) == len(text.split(" "))
-
-
-def test_textfile_path_value_error():
-    with pytest.raises(ValueError) as exc_info:
-        TextFile("invalid.csv", tokens=["Lorem"])
-
-    exc_info.match("File does not exist: invalid.csv.")
 
 
 def test_textfile_results():

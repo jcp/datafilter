@@ -27,18 +27,6 @@ class Base(ABC):
         if not isinstance(type(self).results, property):
             raise TypeError('"results" must be a property.')
 
-        if not isinstance(self.tokens, list):
-            raise TypeError('"tokens" must be a list.')
-
-        if not all(isinstance(x, str) for x in self.tokens):
-            raise ValueError('"tokens" must be a list of strings.')
-
-        if not isinstance(self.translations, list):
-            raise TypeError('"translations" must be a list.')
-
-        if not all(isinstance(x, str) for x in self.translations):
-            raise ValueError('"translations" must be a list of strings.')
-
     @property
     @abstractmethod
     def results(self):
