@@ -2,7 +2,7 @@
 
 import csv
 import re
-from typing import Dict, Iterator, List, Optional, TextIO, Union
+from typing import Any, Dict, Iterator, List, Optional, Union
 
 from .base import Base
 
@@ -23,23 +23,15 @@ class CSV(Base):
         super().__init__(tokens, translations, bidirectional, caseinsensitive)
         self.path = path
 
-    @staticmethod
-    def read_csv(stream: TextIO) -> Iterator[List[str]]:
-        """
-        Generator that yields CSV rows.
-        """
-        for row in csv.reader(stream):
-            yield row
+        Iterator[Dict[str, Dict[str, Union[List[str], str, bool]]]]
 
-    @property
-    def results(self) -> Iterator[Dict[int, Dict[str, Union[List[str], str, bool]]]]:
+    def results(self) -> Iterator[Dict[str, Union[List[str], bool, Dict[str, Any]]]]:
         """
-        Generator that yields processed data.
+        Yield processed data.
         """
         with open(self.path, newline="") as stream:
-            reader = self.read_csv(stream)
-            for data in self.normalize(reader):
-                yield self.parse(data)
+            for row in csv.reader(stream):
+                yield self.parse(row)
 
 
 class Text(Base):
@@ -63,16 +55,15 @@ class Text(Base):
         if not isinstance(self.text, str):
             raise TypeError('"text" must be a string.')
 
-    @property
-    def results(self) -> Iterator[Dict[int, Dict[str, Union[List[str], str, bool]]]]:
+    def results(self) -> Iterator[Dict[str, Union[List[str], bool, Dict[str, Any]]]]:
         """
-        Generator that yields processed data.
+        Yield processed data.
         """
         text = [self.text]
         if self.re_split:
-            text = re.split(self.re_split, self.text)
+            text = re.split(self.re_split, text[0])
 
-        for data in self.normalize(text):
+        for data in text:
             yield self.parse(data)
 
 
@@ -94,15 +85,14 @@ class TextFile(Base):
         self.path = path
         self.re_split = re_split
 
-    @property
-    def results(self) -> Iterator[Dict[int, Dict[str, Union[List[str], str, bool]]]]:
+    def results(self) -> Iterator[Dict[str, Union[List[str], bool, Dict[str, Any]]]]:
         """
-        Generator that yields processed data.
+        Yield processed data.
         """
         with open(self.path, newline="") as buffer:
             buffer = buffer.readlines()
             if self.re_split:
                 buffer = re.split(self.re_split, buffer[0])
 
-            for data in self.normalize(buffer):
+            for data in buffer:
                 yield self.parse(data)

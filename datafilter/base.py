@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Iterator, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from .config import TRANSLATIONS
 
@@ -22,28 +22,17 @@ class Base(ABC):
         self.translations = TRANSLATIONS if translations is None else translations
         self.bidirectional = bidirectional
         self.caseinsensitive = caseinsensitive
+        self.trans = self.maketrans()
+        self.normalized_tokens = [self.normalize(x) for x in self.tokens]
 
-        if not isinstance(type(self).results, property):
-            raise TypeError('"results" must be a property.')
-
-    @property
     @abstractmethod
     def results(self):
         """
-        Abstract method that is used to return processed results.
+        Abstract method used to return results within a filter.
         """
         pass  # pragma: no cover
 
-    def makelower(self, data: str) -> str:
-        """
-        Return lowercase data.
-        """
-        if self.caseinsensitive:
-            data = data.lower()
-
-        return data
-
-    def maketrans(self) -> Dict[int, Optional[int]]:
+    def maketrans(self) -> Dict[int, None]:
         """
         Return translation table.
         """
@@ -52,32 +41,31 @@ class Base(ABC):
         return trans
 
     def normalize(
-        self, data: Union[List[str], Iterator[List[str]]]
-    ) -> Iterator[Dict[str, Union[List[str], str]]]:
+        self, data: Union[List[str], str]
+    ) -> Union[Tuple[List[str], str], Tuple[str, str]]:
         """
-        Generator that yields normalized data.
+        Return normalized data.
         """
-        for i in data:
-            val = "".join(i)
-            val = val.translate(self.maketrans())
-            val = self.makelower(val)
-            yield {"original": i, "normalized": val}
+        sep = "" if type(data) is str else " "
+        val = sep.join(data)
+        val = val.translate(self.trans)
+        val = val.lower() if self.caseinsensitive else val
+        return data, val
 
-    def parse(self, data: Dict[str, Union[List[str], str]]) -> Dict[str, Any]:
+    def parse(self, data: Union[List[str], str]) -> Dict[str, Any]:
         """
         Return parsed data.
         """
         detected = []
         frequency = {}
-        do, dn = data.values()
+        do, dn = self.normalize(data)
 
-        for token in self.normalize(self.tokens):
-            to, tn = token.values()
-            frequency.update({to: 0})
+        for to, tn in self.normalized_tokens:
+            frequency[to] = 0
 
             if tn in dn or self.bidirectional and tn in dn[::-1]:
                 detected.append(to)
-                frequency[to] = dn.count(tn) + dn[::-1].count(tn)
+                frequency[to] += dn.count(tn) + dn[::-1].count(tn)
 
         return {
             "data": do,
