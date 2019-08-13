@@ -48,7 +48,7 @@ from datafilter import CSV
 
 tokens = ["Lorem", "ipsum", "Volutpat est", "mi sit amet"]
 data = CSV("test.csv", tokens=tokens)
-print(next(data.results))
+print(next(data.results()))
 ```
 
 ## Text
@@ -58,7 +58,7 @@ from datafilter import Text
 
 text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit"
 data = Text(text, tokens=["Lorem"])
-print(next(data.results))
+print(next(data.results()))
 ```
 
 ## Text File
@@ -67,7 +67,7 @@ print(next(data.results))
 from datafilter import TextFile
 
 data = TextFile("test.txt", tokens=["Lorem", "ipsum"], re_split=r"(?<=\.)")
-print(next(data.results))
+print(next(data.results()))
 ```
 
 # Features
@@ -81,7 +81,7 @@ Data Filter was designed to be highly extensible. Common or useful filters can b
 
 Abstract base class that's subclassed by every filter.
 
-`Base` includes several methods to ensure data is properly normalized, formatted and returned. The `results` property method is an `@abstractmethod` to enforce its use in subclasses.
+`Base` includes several methods to ensure data is properly normalized, formatted and returned. The `results` method is an `@abstractmethod` to enforce its use in subclasses.
 
 ### Parameters
 
@@ -100,7 +100,7 @@ A list of strings that will be removed during normalization.
 **Default**
 
 ```python
-['!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~', ' \t\n\r\x0b\x0c', '0123456789']
+['0123456789', '(){}[]<>!?.:;,`\'"@#$%^&*+-|=~–—/\\_', '\t\n\r\x0c\x0b']
 ```
 
 #### bidirectional
@@ -135,15 +135,7 @@ True
 
 #### results
 
-Abstract method used to return processed results. This is defined within `Base` subclasses.
-
-#### makelower
-
-Returns lowercase data.
-
-**Returns**
-
-`type <str>`
+Abstract method used to return results within a filter. This is defined by a `Base` subclass
 
 #### maketrans
 
@@ -155,26 +147,20 @@ Returns a translation table used during normalization.
 
 #### normalize
 
-A generator that yields normalized data. Normalization includes converting data to [lowercase](#caseinsensitive) and [removing strings](#translations).
+Returns normalized data. Normalization includes converting data to [lowercase](#caseinsensitive) and [removing strings](#translations).
 
-**Yields**
+**Returns**
 
-`type <dict>`
+`type <tuple>`
 
 > **Note:**
 >
-> Normalized data is returned in the following  key/value format. While the key will always be a string, the value may be a string, list, dictionary or boolean.
+> Normalized data is returned as a tuple. The first element is the original data. The second element is the normalized data.
 >
-> ```python
-> {
->     "original": "",
->     "normalized": "",
-> }
-> ```
 
 #### parse
 
-Returns parsed and property formatted data.
+Returns parsed and properly formatted data.
 
 **Returns**
 
@@ -186,7 +172,7 @@ Returns parsed and property formatted data.
 >
 > ```python
 > data = Text("Lorem ipsum dolor sit amet", tokens=["Lorem"])
-> print(next(data.results))
+> print(next(data.results()))
 > ```
 >
 > The returned result would be formatted as:
@@ -226,14 +212,6 @@ Path to a CSV file.
 ### Methods
 
 `CSV` is a subclass of `Base` and inherits all methods.
-
-#### read_csv
-
-Static method that accepts parameter `stream` of type `TextIO` and returns a generator that yields a list of CSV rows.
-
-**Yields**
-
-`type <list>`
 
 ## Text
 
