@@ -39,8 +39,6 @@ To install, simply use [pipenv](http://pipenv.org/) (or pip):
 
 # Basic Usage
 
-Each example below returns a generator that yields [parsed](#parse) data.
-
 ## CSV
 
 ```python
@@ -48,8 +46,10 @@ from datafilter import CSV
 
 tokens = ["Lorem", "ipsum", "Volutpat est", "mi sit amet"]
 data = CSV("test.csv", tokens=tokens)
-print(next(data.results()))
+data.save("filtered.csv")
 ```
+
+In this example, we open a CSV file, search all rows for normalized tokens and flag them. The `save` method creates a new CSV file with all rows that weren't flagged.
 
 ## Text
 
@@ -61,6 +61,8 @@ data = Text(text, tokens=["Lorem"])
 print(next(data.results()))
 ```
 
+In this example, we search a text string for normalized tokens. We can then iterator over the results using the `.results()` method, which returns a generator that yields [formatted results](#parse).
+
 ## Text File
 
 ```python
@@ -69,6 +71,8 @@ from datafilter import TextFile
 data = TextFile("test.txt", tokens=["Lorem", "ipsum"], re_split=r"(?<=\.)")
 print(next(data.results()))
 ```
+
+In this example, we open a text file and split the data based on a regular expression defined by `re_split`. 
 
 # Features
 
@@ -81,17 +85,17 @@ Data Filter was designed to be highly extensible. Common or useful filters can b
 
 Abstract base class that's subclassed by every filter.
 
-`Base` includes several methods to ensure data is properly normalized, formatted and returned. The `results` method is an `@abstractmethod` to enforce its use in subclasses.
+`Base` includes several methods to ensure data is properly normalized, formatted and returned. The `.results()` method is an `@abstractmethod` to enforce its use in subclasses.
 
 ### Parameters
 
-#### tokens
+#### `tokens`
 
 `type <list>`
 
 A list of strings that will be searched for within a set of data.
 
-#### translations
+#### `translations`
 
 `type <list>`
 
@@ -103,7 +107,7 @@ A list of strings that will be removed during normalization.
 ['0123456789', '(){}[]<>!?.:;,`\'"@#$%^&*+-|=~–—/\\_', '\t\n\r\x0c\x0b']
 ```
 
-#### bidirectional
+#### `bidirectional`
 
 `type <bool>`
 
@@ -119,7 +123,7 @@ True
 >
 > A common obfuscation method is to reverse the offending string or phrase. This helps detect those instances.
 
-#### caseinsensitive
+#### `caseinsensitive`
 
 `type <bool>`
 
@@ -133,11 +137,11 @@ True
 
 ### Methods
 
-#### results
+#### `.results()`
 
 Abstract method used to return results within a filter. This is defined by a `Base` subclass
 
-#### maketrans
+#### `.maketrans()`
 
 Returns a translation table used during normalization.
 
@@ -145,9 +149,11 @@ Returns a translation table used during normalization.
 
 `type <dict>`
 
-#### normalize
+#### `.normalize(data)`
 
 Returns normalized data. Normalization includes converting data to [lowercase](#caseinsensitive) and [removing strings](#translations).
+
+Accepts parameter `data`.
 
 **Returns**
 
@@ -158,40 +164,46 @@ Returns normalized data. Normalization includes converting data to [lowercase](#
 > Normalized data is returned as a tuple. The first element is the original data. The second element is the normalized data.
 >
 
-#### parse
+#### `.parse(data)`
 
-Returns parsed and properly formatted data.
+Returns parsed and formatted data.
+
+Accepts parameter `data`.
 
 **Returns**
 
 `type <dict>`
 
-> **Example:**
+**Example**
+
+Assume we're searching for the token "Lorem" in a very short text string.
+
+```python
+data = Text("Lorem ipsum dolor sit amet", tokens=["Lorem"])
+print(next(data.results()))
+```
+
+The returned result would be formatted as:
+
+```python
+{
+    "data": "Lorem ipsum dolor sit amet",
+    "flagged": True,
+    "describe": {
+        "tokens": {
+            "detected": ["Lorem"],
+            "count": 1,
+            "frequency": {
+                "Lorem": 1,
+            },
+        }
+    },
+}
+```
+
+> **Note:**
 >
-> Assume we're searching for the token "Lorem" in a very short string.
->
-> ```python
-> data = Text("Lorem ipsum dolor sit amet", tokens=["Lorem"])
-> print(next(data.results()))
-> ```
->
-> The returned result would be formatted as:
->
-> ```python
-> {
->     "data": "Lorem ipsum dolor sit amet",
->     "flagged": True,
->     "describe": {
->         "tokens": {
->             "detected": ["Lorem"],
->             "count": 1,
->             "frequency": {
->                 "Lorem": 1,
->             },
->         }
->     },
-> }
-> ```
+> `.parse()` should never be called directly. Use `.results()` instead.
 
 ## Filters
 
@@ -203,7 +215,7 @@ Filters subclass and extend the `Base` class to support various data types and s
 
 `CSV` is a subclass of `Base` and inherits all parameters.
 
-#### path
+#### `path`
 
 `type <str>`
 
@@ -213,19 +225,25 @@ Path to a CSV file.
 
 `CSV` is a subclass of `Base` and inherits all methods.
 
+#### `.save(path)`
+
+Saves results to a file.
+
+Accepts parameter `path`. `path` is the absolute path and filename of the new file.
+
 ## Text
 
 ### Parameters
 
 `Text` is a subclass of `Base` and inherits all parameters.
 
-#### text
+#### `text`
 
 `type <str>`
 
 A text string.
 
-#### re_split
+#### `re_split`
 
 `type <str>`
 
@@ -235,19 +253,25 @@ A regular expression pattern or string that will be applied to `text` with `re.s
 
 `Text` is a subclass of `Base` and inherits all methods.
 
+#### `.save(path, endofline=" ")`
+
+Saves results to a file.
+
+Accepts parameter `path` and `endofline`. `path` is the absolute path and filename of the new file. `endofline` is a line delimiter that will be added to the end of every row.
+
 ## TextFile
 
 ### Parameters
 
 `TextFile` is a subclass of `Base` and inherits all parameters.
 
-#### path
+#### `path`
 
 `type <str>`
 
 Path to a text file.
 
-#### re_split
+#### `re_split`
 
 `type <str>`
 
@@ -256,3 +280,9 @@ A regular expression pattern or string that will be applied to `text` with `re.s
 ### Methods
 
 `TextFile` is a subclass of `Base` and inherits all methods.
+
+#### `.save(path, endofline=" ")`
+
+Saves results to a file.
+
+Accepts parameter `path` and `endofline`. `path` is the absolute path and filename of the new file. `endofline` is a line delimiter that will be added to the end of every row.
