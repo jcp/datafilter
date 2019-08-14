@@ -5,6 +5,7 @@ import re
 from typing import Any, Dict, Iterator, List, Optional, Union
 
 from .base import Base
+from .mixins import Save
 
 
 class CSV(Base):
@@ -29,12 +30,22 @@ class CSV(Base):
         """
         Yield processed data.
         """
-        with open(self.path, newline="") as stream:
-            for row in csv.reader(stream):
+        with open(self.path, newline="") as f:
+            for row in csv.reader(f):
                 yield self.parse(row)
 
+    def save(self, path: str) -> None:
+        """
+        Save rows that are not flagged.
+        """
+        with open(path, "w", newline="") as f:
+            writer = csv.writer(f)
+            for row in self.results():
+                if not row["flagged"]:
+                    writer.writerow(row["data"])
 
-class Text(Base):
+
+class Text(Base, Save):
     """
     A text filter.
     """
@@ -67,7 +78,7 @@ class Text(Base):
             yield self.parse(data)
 
 
-class TextFile(Base):
+class TextFile(Base, Save):
     """
     A text file filter.
     """
@@ -89,10 +100,10 @@ class TextFile(Base):
         """
         Yield processed data.
         """
-        with open(self.path, newline="") as buffer:
-            buffer = buffer.readlines()
+        with open(self.path, newline="") as f:
+            text = f.readlines()
             if self.re_split:
-                buffer = re.split(self.re_split, buffer[0])
+                text = re.split(self.re_split, text[0])
 
-            for data in buffer:
+            for data in text:
                 yield self.parse(data)
