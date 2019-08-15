@@ -99,9 +99,3 @@ def test_parse_return():
             "tokens": {"detected": ["Lorem"], "count": 1, "frequency": {"Lorem": 1}}
         },
     }
-
-
-# def test_save(path):
-#     obj = ValidBase(tokens=["Lorem"])
-#     data = ["Lorem ipsum", "sit amet"]
-#     obj = Valida
